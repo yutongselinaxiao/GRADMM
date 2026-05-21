@@ -27,7 +27,7 @@ dp_c=1.0
 print_full=true
 print_every=10
 save_every=1
-base_dir=./synthetic_data
+base_dir=/data/yutong/synthetic_data
 
 LIST_RHO=(
     0.01

@@ -677,7 +677,11 @@ class Framework:
                 else collator(self.tokenizer, pad_to_multiple_of=8)
             ),
         )
-        trainer.add_callback(SystemMetricCallback(logger=logger))
+        # Disabled 2026-05-21: SystemMetricCallback calls GPUtil.getGPUs() which shells
+        # out to nvidia-smi. After the NVML driver/library mismatch on this cluster,
+        # nvidia-smi returns an error string and GPUtil throws ValueError, killing the
+        # entire job at startup. GPU memory tracking is not needed for our use case.
+        # trainer.add_callback(SystemMetricCallback(logger=logger))
         if self.args.save_on_interrupt:
             trainer.add_callback(SIGUSR1Callback())
 

@@ -1313,6 +1313,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_MAP[args.model_name],
         device_map="auto",
+        torch_dtype=torch.float32,
     )
     # Set gradient for only last layers
     if args.last_layer_gradient:
