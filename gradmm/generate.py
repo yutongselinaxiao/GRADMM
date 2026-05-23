@@ -15,6 +15,7 @@ from torch import optim
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from args_factory import get_args
+from adaptive_rho import AdaptiveRhoState
 from data_utils import BatchDatasetLoader, TextDataset
 from init import get_init_lm
 from utilities import (
@@ -352,6 +353,24 @@ def generation(
         prev_n_steps = args.n_steps
         args.n_steps = 0
 
+    # ── Adaptive ADMM penalty (rho) state ─────────────────────────────────
+    adaptive_rho_state = AdaptiveRhoState(
+        initial_rho=args.admm_rho,
+        mode=getattr(args, 'sigma_mode', 'fixed'),
+        device=device,
+        eta_u=getattr(args, 'eta_u', 0.05),
+        G_clip=getattr(args, 'G_clip', 10.0),
+        ema_beta=getattr(args, 'sigma_ema_beta', 0.9),
+        heuristic_mu=getattr(args, 'heuristic_mu', 10.0),
+        heuristic_tau=getattr(args, 'heuristic_tau', 2.0),
+        heuristic_k_max=getattr(args, 'heuristic_k_max', 50),
+        lipschitz_floor_alpha=getattr(args, 'lipschitz_floor_alpha', 1.0),
+        lipschitz_min_dz=getattr(args, 'lipschitz_min_dz', 1e-6),
+        lipschitz_max=getattr(args, 'lipschitz_max', 1e4),
+        lipschitz_ema_beta=getattr(args, 'lipschitz_ema_beta', 0.9),
+        update_freq=getattr(args, 'sigma_update_freq', 1),
+    )
+
     for it in range(args.n_steps):
         if isinstance(prompt_embeddings, list):
         # First prompt
@@ -372,6 +391,8 @@ def generation(
         
         t_start = time.time()
         if args.opt_alg == "admm":
+            # ── Adaptive rho: cache z BEFORE it gets overwritten by z-update ──
+            adaptive_rho_state.before_z_update(z_embeds)
             # x + rho^-1 * lambda
             intermediate_embeds = x_embeds.data.clone().detach()
             intermediate_embeds.add_(
@@ -555,6 +576,34 @@ def generation(
                 args.admm_rho
                 * (x_embeds.data.detach().clone() - z_embeds.data.detach().clone())
             )
+
+            # ── Adaptive rho update (after lambda update, end of outer iter) ──
+            new_rho = adaptive_rho_state.after_lambda_update(
+                iteration=it,
+                x_embeds=x_embeds,
+                z_embeds=z_embeds,
+                grad=(x_embeds.grad if x_embeds.grad is not None else None),
+            )
+            args.admm_rho = new_rho
+            # Always log primal/dual residuals and current rho (cheap; useful even in fixed mode)
+            try:
+                with torch.no_grad():
+                    primal_now = float((x_embeds - z_embeds).detach().norm().item())
+                base_payload = {
+                    "adaptive/rho": float(new_rho),
+                    "adaptive/primal_res": primal_now,
+                    "adaptive/iter_in_admm_loop": it,
+                    "adaptive/mode": adaptive_rho_state.mode,
+                }
+                # Augment with mode-specific diagnostics when available
+                base_payload.update({f"adaptive/{k}": v for k, v in adaptive_rho_state.last.items()})
+                wandb.log(base_payload)
+            except Exception:
+                pass  # don't crash generation if wandb is offline / not initialized
+
+            if adaptive_rho_state.mode != 'fixed':
+                print(f"--ADAPTIVE RHO it={it} mode={adaptive_rho_state.mode} "
+                      f"rho={new_rho:.4g} | {adaptive_rho_state.last}")
         else:
             def closure():
                 opt.zero_grad()
