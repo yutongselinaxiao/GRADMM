@@ -118,7 +118,7 @@ class AdaptiveRhoState:
 
     Usage in generate.py:
 
-        state = AdaptiveRhoState(initial_rho=args.admm_rho, mode=args.sigma_mode,
+        state = AdaptiveRhoState(initial_rho=args.admm_rho, mode=args.rho_mode,
                                  eta_u=..., G_clip=..., ema_beta=..., ...)
         for it in range(args.n_steps):
             state.before_z_update(z_embeds)   # cache z^k
@@ -267,7 +267,7 @@ class AdaptiveRhoState:
                              'floor_active': float(floor_active),
                              'u': float(self.u), 'rho': self.rho}
             else:
-                raise ValueError(f"Unknown sigma_mode: {self.mode}")
+                raise ValueError(f"Unknown rho_mode: {self.mode}")
 
         self._cache(x_embeds, grad)
         return self.rho

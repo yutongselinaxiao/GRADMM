@@ -88,6 +88,28 @@ def get_args(argv=None):
     parser.add_argument(
         '--admm_inner_steps', type=int, default=10
     )   # Possible range 10 - 200
+    # Adaptive rho (penalty) params — see adaptive_rho.py
+    parser.add_argument(
+        '--rho_mode', type=str, default='fixed',
+        choices=['fixed', 'heuristic', 'online_convex_bal', 'online_convex_bal_lipschitz'],
+        help='Adaptive ADMM rho mode. fixed = keep args.admm_rho constant.',
+    )
+    parser.add_argument('--eta_u', type=float, default=0.05,
+                        help='OGD step on u=log(rho)')
+    parser.add_argument('--G_clip', type=float, default=10.0,
+                        help='grad clip for OGD on u')
+    parser.add_argument('--rho_ema_beta', type=float, default=0.9,
+                        help='EMA smoothing for primal/dual residuals')
+    parser.add_argument('--rho_update_freq', type=int, default=1,
+                        help='update rho every N outer iters')
+    parser.add_argument('--heuristic_mu', type=float, default=10.0)
+    parser.add_argument('--heuristic_tau', type=float, default=2.0)
+    parser.add_argument('--heuristic_k_max', type=int, default=50)
+    parser.add_argument('--lipschitz_floor_alpha', type=float, default=1.0,
+                        help='hard projection: sigma >= alpha * L_hat')
+    parser.add_argument('--lipschitz_min_dz', type=float, default=1e-6)
+    parser.add_argument('--lipschitz_max', type=float, default=1e4)
+    parser.add_argument('--lipschitz_ema_beta', type=float, default=0.9)
     parser.add_argument(
         '--tag_factor', type=float, default=None
     )   # TAG best: 1e-3

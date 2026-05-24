@@ -356,11 +356,11 @@ def generation(
     # ── Adaptive ADMM penalty (rho) state ─────────────────────────────────
     adaptive_rho_state = AdaptiveRhoState(
         initial_rho=args.admm_rho,
-        mode=getattr(args, 'sigma_mode', 'fixed'),
+        mode=getattr(args, 'rho_mode', 'fixed'),
         device=device,
         eta_u=getattr(args, 'eta_u', 0.05),
         G_clip=getattr(args, 'G_clip', 10.0),
-        ema_beta=getattr(args, 'sigma_ema_beta', 0.9),
+        ema_beta=getattr(args, 'rho_ema_beta', 0.9),
         heuristic_mu=getattr(args, 'heuristic_mu', 10.0),
         heuristic_tau=getattr(args, 'heuristic_tau', 2.0),
         heuristic_k_max=getattr(args, 'heuristic_k_max', 50),
@@ -368,7 +368,7 @@ def generation(
         lipschitz_min_dz=getattr(args, 'lipschitz_min_dz', 1e-6),
         lipschitz_max=getattr(args, 'lipschitz_max', 1e4),
         lipschitz_ema_beta=getattr(args, 'lipschitz_ema_beta', 0.9),
-        update_freq=getattr(args, 'sigma_update_freq', 1),
+        update_freq=getattr(args, 'rho_update_freq', 1),
     )
 
     for it in range(args.n_steps):

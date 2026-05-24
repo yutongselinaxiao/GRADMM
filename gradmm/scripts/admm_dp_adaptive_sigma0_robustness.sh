@@ -30,9 +30,9 @@ DP="--use_dp true --dp_epsilon 0.05 --dp_delta 1e-4 --dp_c 1.0"
 DP_EPS=0.05  # for run-dir naming
 
 # Adaptive rho hyperparams (Lipschitz floor variant — the most theory-backed)
-# NB: sigma_ema_beta=0.0 disables EMA smoothing — uses raw per-iter residuals.
-ADAPT="--sigma_mode online_convex_bal_lipschitz \
---eta_u 0.05 --G_clip 10.0 --sigma_ema_beta 0.0 --sigma_update_freq 1 \
+# NB: rho_ema_beta=0.0 disables EMA smoothing — uses raw per-iter residuals.
+ADAPT="--rho_mode online_convex_bal_lipschitz \
+--eta_u 0.05 --G_clip 10.0 --rho_ema_beta 0.0 --rho_update_freq 1 \
 --lipschitz_floor_alpha 1.0 --lipschitz_ema_beta 0.9 \
 --lipschitz_min_dz 1e-6 --lipschitz_max 1e4"
 

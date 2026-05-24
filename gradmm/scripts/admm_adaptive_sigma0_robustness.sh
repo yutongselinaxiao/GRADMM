@@ -24,8 +24,8 @@ COMMON="--rng_seed 42 --dataset sst2 --split validation \
 --grad_clip 1.0 --topk 200"
 
 # Adaptive rho hyperparams (Lipschitz floor variant — the most theory-backed)
-ADAPT="--sigma_mode online_convex_bal_lipschitz \
---eta_u 0.05 --G_clip 10.0 --sigma_ema_beta 0.0 --sigma_update_freq 1 \
+ADAPT="--rho_mode online_convex_bal_lipschitz \
+--eta_u 0.05 --G_clip 10.0 --rho_ema_beta 0.0 --rho_update_freq 1 \
 --lipschitz_floor_alpha 1.0 --lipschitz_ema_beta 0.9 \
 --lipschitz_min_dz 1e-6 --lipschitz_max 1e4"
 
